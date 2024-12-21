@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Présences Église</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiUHLDqXNlbmNlcyDDiWdsaXNlIiwic2hvcnRfbmFtZSI6IlByw6lzZW5jZXMiLCJzdGFydF91cmwiOiIuLyIsImRpc3BsYXkiOiJzdGFuZGFsb25lIiwiYmFja2dyb3VuZF9jb2xvciI6IiNmZmZmZmYiLCJ0aGVtZV9jb2xvciI6IiMzQjgyRjYiLCJpY29ucyI6W3sic3JjIjoiZGF0YTppbWFnZS9zdmcreG1sO2Jhc2U2NCxQSE4yWnlCNGJXeHVjejBpYUhSMGNEb3ZMM2QzZHk1M015NXZjbWN2TWpBd01DOXpkbWNpSUhacFpYZENiM2c5SWpBZ01DQTRNQ0E0TUNJZ2RtVnljMmx2YmowaU1TNHhJajQ4Y0dGMGFDQmtQU0pOTUNBNE1FZ3dWaUlnYzNSeWIydGxQU0pqYjJ4dmNqb2pabVptWm1abUlpQnpkSEp2YTJVdGQybGtkR2c5SWpFaUx6NDhMM04yWno0PSJ9XX0=">
+    <meta name="theme-color" content="#3B82F6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="Présences Église">
+</head>
+<body class="bg-gray-100">
+    <!-- Écran de configuration -->
+    <div id="setupScreen" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Configuration de la Session</h2>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Leader de Cellule</label>
+                    <select id="setupLeader" class="w-full p-2 border rounded">
+                        <option value="">Sélectionner un leader</option>
+                    </select>
+                    <button onclick="addNewLeader()" class="mt-2 text-sm text-blue-600 hover:underline">
+                        + Ajouter un nouveau leader
+                    </button>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Date du Service</label>
+                    <input type="date" id="setupDate" class="w-full p-2 border rounded">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Type de Service</label>
+                    <select id="setupService" class="w-full p-2 border rounded">
+                        <option value="wednesday">Culte de Mercredi</option>
+                        <option value="friday">Culte de Vendredi</option>
+                        <option value="sunday">Culte de Dimanche</option>
+                        <option value="communion">Culte de Communion</option>
+                        <option value="special">Programme Spécial</option>
+                    </select>
+                </div>
+                <button onclick="startSession()" class="w-full bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                    Commencer l'Enregistrement
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application principale -->
+    <div id="mainApp" class="container mx-auto px-4 py-6" style="display: none;">
+        <div class="bg-white rounded-lg shadow-lg p-4">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+                <div>
+                    <h1 class="text-xl font-bold text-gray-800">Présences Église</h1>
+                    <p id="sessionInfo" class="text-gray-600 mt-1 text-sm"></p>
+                    <p id="leaderInfo" class="text-gray-600 text-sm"></p>
+                </div>
+                <div class="mt-4 sm:mt-0 space-x-2">
+                    <button onclick="changeSession()" class="bg-gray-500 text-white px-4 py-2 rounded text-sm hover:bg-gray-600">
+                        Changer
+                    </button>
+                    <button onclick="downloadExcel()" class="bg-green-500 text-white px-4 py-2 rounded text-sm hover:bg-green-600">
+                        Excel
+                    </button>
+                </div>
+            </div>
+
+            <!-- Formulaire d'enregistrement -->
+            <div class="space-y-4 mb-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nom</label>
+                    <input type="text" id="name" placeholder="Nom du membre" class="w-full p-3 border rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Téléphone</label>
+                    <input type="tel" id="phone" placeholder="Numéro de téléphone" class="w-full p-3 border rounded-lg">
+                </div>
+                <button onclick="addAttendance()" class="w-full bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600">
+                    Ajouter
+                </button>
+            </div>
+
+            <!-- Statistiques -->
+            <div class="bg-gray-50 p-4 rounded-lg mb-6">
+                <h3 class="text-lg font-semibold mb-2">Statistiques</h3>
+                <p id="stats">Présences: 0 personnes</p>
+            </div>
+
+            <!-- Liste des présences -->
+            <div>
+                <h3 class="text-lg font-semibold mb-2">Liste des Présences</h3>
+                <div id="attendanceList" class="space-y-2"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // État de l'application
+        let attendance = [];
+        let currentDate = '';
+        let currentService = '';
+        let currentLeader = '';
+        
+        const services = {
+            wednesday: 'Culte de Mercredi',
+            friday: 'Culte de Vendredi',
+            sunday: 'Culte de Dimanche',
+            communion: 'Culte de Communion',
+            special: 'Programme Spécial'
+        };
+
+        // Gestion des leaders
+        let leaders = JSON.parse(localStorage.getItem('leaders') || '[]');
+
+        function updateLeadersList() {
+            const select = document.getElementById('setupLeader');
+            select.innerHTML = '<option value="">Sélectionner un leader</option>';
+            leaders.forEach(leader => {
+                const option = document.createElement('option');
+                option.value = leader;
+                option.textContent = leader;
+                select.appendChild(option);
+            });
+        }
+
+        function addNewLeader() {
+            const name = prompt('Nom du nouveau leader:');
+            if (name && name.trim()) {
+                leaders.push(name.trim());
+                localStorage.setItem('leaders', JSON.stringify(leaders));
+                updateLeadersList();
+            }
+        }
+
+        // Initialisation
+        document.getElementById('setupDate').valueAsDate = new Date();
+        updateLeadersList();
+
+        // Service Worker pour PWA
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').catch(console.error);
+        }
+
+        // Démarrer la session
+        function startSession() {
+            currentDate = document.getElementById('setupDate').value;
+            currentService = document.getElementById('setupService').value;
+            currentLeader = document.getElementById('setupLeader').value;
+
+            if (!currentDate || !currentLeader) {
+                alert('Veuillez remplir tous les champs');
+                return;
+            }
+
+            document.getElementById('setupScreen').style.display = 'none';
+            document.getElementById('mainApp').style.display = 'block';
+            document.getElementById('sessionInfo').textContent = 
+                `${currentDate} - ${services[currentService]}`;
+            document.getElementById('leaderInfo').textContent = 
+                `Leader: ${currentLeader}`;
+
+            updateDisplay();
+        }
+
+        function changeSession() {
+            document.getElementById('setupScreen').style.display = 'flex';
+            document.getElementById('mainApp').style.display = 'none';
+        }
+
+        // Ajouter une présence
+        function addAttendance() {
+            const name = document.getElementById('name').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+
+            if (!name || !phone) {
+                alert('Veuillez remplir tous les champs');
+                return;
+            }
+
+            const record = {
+                id: Date.now(),
+                name,
+                phone,
+                date: currentDate,
+                service: currentService,
+                leader: currentLeader,
+                timestamp: new Date().toISOString()
+            };
+
+            attendance.push(record);
+            document.getElementById('name').value = '';
+            document.getElementById('phone').value = '';
+            updateDisplay();
+            
+            // Sauvegarder dans le localStorage
+            localStorage.setItem('attendance', JSON.stringify(attendance));
+        }
+
+        // Supprimer une présence
+        function removeAttendance(id) {
+            if (confirm('Voulez-vous vraiment supprimer cette présence ?')) {
+                attendance = attendance.filter(record => record.id !== id);
+                updateDisplay();
+                localStorage.setItem('attendance', JSON.stringify(attendance));
+            }
+        }
+
+        // Mettre à jour l'affichage
+        function updateDisplay() {
+            const filteredRecords = attendance.filter(
+                record => record.date === currentDate && 
+                         record.service === currentService &&
+                         record.leader === currentLeader
+            );
+
+            document.getElementById('stats').textContent = 
+                `Présences: ${filteredRecords.length} personnes`;
+
+            const list = document.getElementById('attendanceList');
+            list.innerHTML = filteredRecords.map(record => `
+                <div class="flex justify-between items-center p-3 bg-white border rounded-lg shadow-sm">
+                    <div class="flex flex-col">
+                        <span class="font-medium">${record.name}</span>
+                        <span class="text-sm text-gray-500">${record.phone}</span>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="text-xs text-gray-500 mr-3">
+                            ${new Date(record.timestamp).toLocaleTimeString()}
+                        </span>
+                        <button onclick="removeAttendance(${record.id})" 
+                                class="bg-red-500 text-white px-3 py-1 rounded-lg text-sm hover:bg-red-600">
+                            ✕
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Télécharger en Excel
+        function downloadExcel() {
+            const wb = XLSX.utils.book_new();
+            
+            const filteredData = attendance.filter(
+                record => record.date === currentDate && 
+                         record.service === currentService &&
+                         record.leader === currentLeader
+            );
+            
+            const wsData = [
+                ['Date:', currentDate, ''],
+                ['Service:', services[currentService], ''],
+                ['Leader:', currentLeader, ''],
+                ['', '', ''],
+                ['N°', 'Nom', 'Numéro']
+            ];
+
+            filteredData.forEach((record, index) => {
+                wsData.push([index + 1, record.name, record.phone]);
+            });
+
+            wsData.push(['', '', '']);
+            wsData.push(['Total', `${filteredData.length} présences`, '']);
+
+            const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+            ws['!cols'] = [
+                { wch: 8 },
+                { wch: 30 },
+                { wch: 15 }
+            ];
+
+            XLSX.utils.book_append_sheet(wb, ws, "Présences");
+            XLSX.writeFile(wb, `presences_${currentDate}_${currentService}_${currentLeader}.xlsx`);
+        }
+
+        // Charger les données sauvegardées
+        const savedAttendance = localStorage.getItem('attendance');
+        if (savedAttendance) {
+            attendance = JSON.parse(savedAttendance);
+        }
+    </script>
+</body>
+</html>
